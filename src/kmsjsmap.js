@@ -47,7 +47,7 @@ if (!Object.keys) {
 }
 
 $(function() {
-  var html = '<div id="kmsjsmap_contextmenu"><ul class="kmsjsmap-dropdown-menu"><li><a href="javascript: kmsjsmap.add_node();">添加节点</a></li><li><a href="javascript: kmsjsmap.modify_node()">编辑节点</a></li><li><a href="javascript: kmsjsmap.del_node()">删除节点</a></li><li><a href="javascript: kmsjsmap.relation_node()">关联节点</a></li></ul></div>';
+  var html = '<div id="kmsjsmap_contextmenu"><ul class="kmsjsmap-dropdown-menu"><li><a href="javascript: kmsjsmap.add_node();">添加条件</a></li><li><a href="javascript: kmsjsmap.add_logic()">添加Logic</a></li><li><a href="javascript: kmsjsmap.modify_node()">编辑节点</a></li><li><a href="javascript: kmsjsmap.del_node()">删除节点</a></li></ul></div>';
 
   $('body').append(html);
 
@@ -63,6 +63,7 @@ $(function() {
  *   https://github.com/hizzgdev/jsmind/
  */
 (function($w) {
+  console.log('$w-------->',$w)
   'use strict';
   // set 'jsMind' as the library name.
   // __name__ should be a const value, Never try to change it easily.
@@ -109,7 +110,9 @@ $(function() {
       hmargin: 100,
       vmargin: 50,
       line_width: 2,
-      line_color: '#555'
+      line_color: '#555',
+      line_style: 'straight',
+      draggable: true,
     },
     layout: {
       hspace: 30,
@@ -1051,21 +1054,22 @@ $(function() {
         if (navigator.msSaveBlob) {
           navigator.msSaveBlob(blob, name);
         } else {
-          var URL = $w.URL || $w.webkitURL;
-          var bloburl = URL.createObjectURL(blob);
-          var anchor = $c('a');
-          if ('download' in anchor) {
-            anchor.style.visibility = 'hidden';
-            anchor.href = bloburl;
-            anchor.download = name;
-            $d.body.appendChild(anchor);
-            var evt = $d.createEvent('MouseEvents');
-            evt.initEvent('click', true, true);
-            anchor.dispatchEvent(evt);
-            $d.body.removeChild(anchor);
-          } else {
-            location.href = bloburl;
-          }
+          // var URL = $w.URL || $w.webkitURL;
+          // var bloburl = URL.createObjectURL(blob);
+          var anchor = $c('select');
+          $d.body.appendChild(anchor);
+          // if ('download' in anchor) {
+          //   anchor.style.visibility = 'hidden';
+          //   anchor.href = bloburl;
+          //   anchor.download = name;
+          //   $d.body.appendChild(anchor);
+          //   var evt = $d.createEvent('MouseEvents');
+          //   evt.initEvent('click', true, true);
+          //   anchor.dispatchEvent(evt);
+          //   $d.body.removeChild(anchor);
+          // } else {
+          //   location.href = bloburl;
+          // }
         }
       }
     },
@@ -1146,7 +1150,8 @@ $(function() {
         hmargin: opts.view.hmargin,
         vmargin: opts.view.vmargin,
         line_width: opts.view.line_width,
-        line_color: opts.view.line_color
+        line_color: opts.view.line_color,
+        line_style: opts.view.line_style
       };
       // create instance of function provider
       this.data = new jm.data_provider(this);
@@ -2289,6 +2294,7 @@ $(function() {
       this.e_canvas = $c('canvas');
       this.e_nodes = $c('jmnodes');
       this.e_editor = $c('input');
+      this.e_select = $c('select');
 
       this.e_panel.className = 'jsmind-inner';
       this.e_panel.appendChild(this.e_canvas);
@@ -2442,7 +2448,7 @@ $(function() {
         }
       }
 
-      // 创建右上角的小图标 雕漆里
+      // 创建右上角的小图标
       var badge = $c('div');
       badge.className = 'leo-badge'
       parent_node.appendChild(badge);
@@ -2546,8 +2552,14 @@ $(function() {
       var ncs = getComputedStyle(element);
       this.e_editor.value = topic;
       this.e_editor.style.width = (element.clientWidth - parseInt(ncs.getPropertyValue('padding-left')) - parseInt(ncs.getPropertyValue('padding-right'))) + 'px';
+      // console.log('element-------->', element)
+      let shtml = '<option>全部满足</option><option>满足其一</option>';
       element.innerHTML = '';
       element.appendChild(this.e_editor);
+      element.appendChild(this.e_select);
+      var children = element.childNodes;
+      children[0].append()
+      console.log('children-------->', children)
       element.style.zIndex = 5;
       this.e_editor.focus();
       this.e_editor.select();
@@ -2725,7 +2737,7 @@ $(function() {
           expander.style.display = 'none';
           expander.style.visibility = 'hidden';
         }
-        // 创建右上角的小图标 丢那妈
+        // 创建右上角的小图标
         if (!node.data.badge || node.data.badge < 1) continue;
         var badge = view_data.badge;
         badge.style.left = (_offset.x + p_expander.x - 10) + 'px';
@@ -2825,6 +2837,7 @@ $(function() {
       var ctx = canvas_ctx || this.canvas_ctx;
       ctx.strokeStyle = this.opts.line_color;
       ctx.lineWidth = this.opts.line_width;
+      ctx.lineStyle = this.opts.line_style;
       ctx.lineCap = 'round';
 
       jm.util.canvas.bezierto(
@@ -3075,7 +3088,8 @@ $(function() {
   var options = {
     line_width: 5,
     lookup_delay: 500,
-    lookup_interval: 80
+    lookup_interval: 80,
+    line_style: 'straight'
   };
 
   jsMind.draggable = function(jm) {
@@ -3160,6 +3174,7 @@ $(function() {
     _magnet_shadow: function(node) {
       if (!!node) {
         this.canvas_ctx.lineWidth = options.line_width;
+        this.canvas_ctx.lineStyle = options.line_style;
         this.canvas_ctx.strokeStyle = 'rgba(0,0,0,0.3)';
         this.canvas_ctx.lineCap = 'round';
         this.clear_lines();
@@ -3911,7 +3926,9 @@ $(function() {
 // kmsjsmap
 // 思维导图JS库
 (function($w) {
-  if (!$w.jsMind) return;
+  var jsMind = $w.jsMind
+
+  if (!jsMind) return;
 
   var __NAME__ = 'kmsjsmap'
   var logger = (typeof console === 'undefined') ? {
@@ -3935,6 +3952,7 @@ $(function() {
     options: '',
     isInit: false,
     editable: true,
+    view: {},
     onRelation: _noop
   }
 
@@ -3948,6 +3966,7 @@ $(function() {
     if (this.isInit) return;
     this.isInit = true;
     this.options = options;
+    this.view = options.view;
     this.editable = options.editable === true ? true : false;
     if (options.onRelation) this.onRelation = options.onRelation;
     this._load_jsmind();
@@ -3958,18 +3977,21 @@ $(function() {
 
   // 初始化思维导图
   kmsjsmap._load_jsmind = function() {
+    let lineStyle = this.options.view.line_style || 'straight'
     var options = {
       container: this.options.container,
       editable: this.editable,
-      theme: 'kms1',
+      theme: 'primary',
       mode: 'full',
+      // support_html : true,// 是否支持节点里的HTML元素
       shortcut: {
         enable: false // 是否启用快捷键
       },
       onRelation: this.onRelation,
       view: {
         line_width: 2,
-        line_color: '#5385EE'
+        line_color: '#5385EE',
+        line_style: lineStyle
       }
     }
     var mind = {
@@ -4021,7 +4043,6 @@ $(function() {
   kmsjsmap._conTextMenuEvenHandle = function(e) {
     e.preventDefault();
     if (!kmsjsmap.editable) return;
-    // console.log('右键拉拉拉拉')
     $conTextMenu.show().css({
       left: e.pageX,
       top: e.pageY
@@ -4071,15 +4092,14 @@ $(function() {
     var nodeid = jsMind.util.uuid.newid();
     var topic = '请输入子节点名称';
     var node = _jm.add_node(_jm.get_selected_node(), nodeid, topic, { badge: 0 }, 'right');
-    // console.log(node);
     _jm.begin_edit(node);
     // 为了给新添加的节点也加上右键菜单
-    $('jmnode').off('contextmenu', function() {});
+    // $('jmnode').off('contextmenu', function() {});
     $('jmnode').on('contextmenu', kmsjsmap._conTextMenuEvenHandle);
   }
 
-  // 关联节点
-  kmsjsmap.relation_node = function() {
+  // 新增逻辑要素节点
+  kmsjsmap.add_logic = function() {
     $conTextMenu.hide();
     var node = _jm.get_selected_node();
     kmsjsmap.onRelation(node);
